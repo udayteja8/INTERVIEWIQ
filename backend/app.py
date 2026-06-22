@@ -16,7 +16,12 @@ CORS(
         }
     }
 )
-
+@app.route("/")
+def home():
+    return {
+        "status": "success",
+        "message": "InterviewIQ Backend Running"
+    }
 app.register_blueprint(auth_bp)
 
 app.register_blueprint(interview_bp)
