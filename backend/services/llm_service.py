@@ -73,155 +73,244 @@ STRICT RULES:
 
 
 def generate_resume_questions(analysis):
-    is_topic = isinstance(analysis, dict) and len(analysis.get("skills", [])) == 1 and len(analysis.get("projects", [])) <= 1
+    skills = analysis.get("skills", [])
+    projects = analysis.get("projects", [])
+
+
+    is_topic = (
+        isinstance(analysis, dict)
+        and len(skills) == 1
+        and len(projects) <= 1
+    )
 
     BAD_KEYWORDS = [
-        "__future__", "metaclass", "cyclic reference", "memory allocator",
-        "descriptor", "ast", "bytecode", "frame object", "traceback internals",
-        "python c api", "coroutine internals", "generator internals",
-        "context parameter", "abstract syntax tree", "code objects"
+        "__future__", "metaclass", "cyclic reference",
+        "memory allocator", "descriptor", "ast",
+        "bytecode", "frame object", "traceback internals",
+        "python c api", "coroutine internals",
+        "generator internals", "context parameter",
+        "abstract syntax tree", "code objects"
     ]
 
     if is_topic:
-        topic = analysis["skills"][0]
+        topic = skills[0]
+
         prompt = f"""
-You are a technical interviewer for FRESHER/STUDENT candidates.
 
-Topic: {topic}
 
-Generate exactly 10 UNIQUE interview questions covering DIFFERENT subtopics.
+    You are a senior technical interviewer.
 
-COVERAGE RULES - Each subtopic max 1-2 questions:
-- Basic definition and purpose of {topic}
-- Core syntax and structure
-- Variables and data types
-- Control flow (loops, conditions)
-- Functions/methods
-- Object-oriented concepts (if applicable)
-- Error handling
-- Common libraries/frameworks (if applicable)
-- Best practices
-- ONE advanced concept only (question 10)
+    Topic: {topic}
 
-CRITICAL:
-- NEVER repeat the same concept
-- 6 Easy, 3 Medium, 1 Hard (Hard = question 10 only)
-- Easy = absolute fundamentals a fresher should know
-- Medium = practical application
-- Hard = ONE advanced question at the end
-- Theory only - NO coding
-- Fresher campus placement interview style
+    Generate exactly 10 interview questions.
 
-Return ONLY valid JSON:
-{{
-    "questions":[
-        {{"question":"", "topic":"{topic}", "difficulty":"Easy", "subtopic":""}}
+    Distribution:
+
+    * 6 Easy
+    * 3 Medium
+    * 1 Hard
+
+    Cover different areas:
+
+    1. Basics
+    2. Syntax
+    3. Variables/Data Types
+    4. Control Flow
+    5. Functions
+    6. OOP
+    7. Error Handling
+    8. Libraries
+    9. Best Practices
+    10. Advanced Concept
+
+    RULES:
+
+    * Theory only
+    * Fresher interview style
+    * No coding questions
+    * No duplicate concepts
+    * Every question must have topic and subtopic
+
+    Return ONLY JSON:
+
+    {{
+    "questions": [
+    {{
+    "question": "",
+    "topic": "{topic}",
+    "subtopic": "",
+    "difficulty": "Easy"
+    }}
     ]
-}}
-"""
+    }}
+    """
     else:
-        skills = analysis.get("skills", [])
-        projects = analysis.get("projects", [])
-        
         prompt = f"""
-You are a technical interviewer for FRESHER candidates.
+    You are a placement interviewer.
 
-Skills: {json.dumps(skills)}
-Projects: {json.dumps(projects)}
+    Skills:
+    {json.dumps(skills)}
 
-Generate exactly 10 UNIQUE interview questions.
+    Projects:
+    {json.dumps(projects)}
 
-RULES:
-1. 6 Easy: Basic concepts from listed skills, simple project questions
-2. 3 Medium: Practical understanding, project implementation
-3. 1 Hard: ONE advanced question only
-4. Ask about DIFFERENT skills/projects - don't repeat same topic
-5. Mention project names in questions
-6. Theory only - NO coding
-7. Fresher-friendly - campus placement style
-8. Each skill/project covered max 2 times
+    Generate exactly 10 interview questions.
 
-Return ONLY valid JSON:
-{{
-    "questions":[
-        {{"question":"", "topic":"", "difficulty":"Easy", "subtopic":""}}
+    Distribution:
+
+    * 6 Easy
+    * 3 Medium
+    * 1 Hard
+
+    Question Mix:
+
+    * 4 skill-based questions
+    * 3 project-based questions
+    * 3 practical understanding questions
+
+    RULES:
+
+    * Ask only from listed skills/projects
+    * No coding questions
+    * Fresher placement level
+    * No repeated concepts
+    * Every question must have topic
+    * Every question must have subtopic
+    * Mention project names when relevant
+
+    Return ONLY JSON:
+
+    {{
+    "questions": [
+    {{
+    "question": "",
+    "topic": "Python",
+    "subtopic": "Functions",
+    "difficulty": "Easy"
+    }}
     ]
-}}
-"""
-
+    }}
+    """
     content = _call(prompt)
+
 
     try:
         result = json.loads(content)
         questions = result.get("questions", [])
 
         final_questions = []
-        seen_texts = set()
+        seen_questions = set()
         topic_count = {}
 
         for q in questions:
+
             question_text = q.get("question", "").strip()
+
             if not question_text:
                 continue
 
             lower_q = question_text.lower()
 
-            # Filter bad keywords
-            if any(keyword.lower() in lower_q for keyword in BAD_KEYWORDS):
-                print(f"Filtered bad keyword: {question_text}")
+            if any(
+                keyword.lower() in lower_q
+                for keyword in BAD_KEYWORDS
+            ):
                 continue
 
-            # Check duplicates
-            normalized = re.sub(r"[^a-z0-9 ]", "", lower_q)
-            words = normalized.split()
-            start3 = " ".join(words[:3])
-            start5 = " ".join(words[:5])
+            normalized = re.sub(
+                r"[^a-z0-9 ]",
+                "",
+                lower_q
+            )
 
-            if normalized in seen_texts or start3 in seen_texts or start5 in seen_texts:
-                print(f"Filtered duplicate: {question_text}")
+            if normalized in seen_questions:
                 continue
 
-            # Check topic frequency - max 2 per subtopic
-            subtopic = q.get("subtopic", q.get("topic", "general")).lower()
-            current_count = topic_count.get(subtopic, 0)
-            if current_count >= 2:
-                print(f"Filtered - too many from '{subtopic}': {question_text}")
+            topic = (
+                q.get("topic")
+                or "General"
+            ).strip()
+
+            subtopic = (
+                q.get("subtopic")
+                or topic
+            ).strip()
+
+            key = f"{topic}:{subtopic}".lower()
+
+            if topic_count.get(key, 0) >= 2:
                 continue
 
-            seen_texts.add(normalized)
-            seen_texts.add(start3)
-            seen_texts.add(start5)
-            topic_count[subtopic] = current_count + 1
-            final_questions.append(q)
+            topic_count[key] = (
+                topic_count.get(key, 0) + 1
+            )
 
-        print(f"Topic distribution: {topic_count}")
+            seen_questions.add(normalized)
 
-        # If not enough, add fallbacks
-        if len(final_questions) < 10 and is_topic:
-            topic = analysis["skills"][0]
-            fallbacks = [
-                f"What is {topic} and what is it used for?",
-                f"What are the key features of {topic}?",
-                f"Explain basic syntax of {topic}",
-                f"What are variables in {topic}?",
-                f"Explain data types in {topic}",
-                f"What are functions in {topic}?",
-                f"How do loops work in {topic}?",
-                f"Explain error handling in {topic}",
-                f"What are best practices in {topic}?",
-                f"What are common use cases of {topic}?"
+            final_questions.append({
+                "question": question_text,
+                "topic": topic,
+                "subtopic": subtopic,
+                "difficulty": q.get(
+                    "difficulty",
+                    "Easy"
+                )
+            })
+
+        if len(final_questions) < 10:
+
+            fallback_topic = (
+                skills[0]
+                if skills
+                else "Programming"
+            )
+
+            fallback_questions = [
+                f"What is {fallback_topic}?",
+                f"What are the key features of {fallback_topic}?",
+                f"Explain variables in {fallback_topic}.",
+                f"Explain functions in {fallback_topic}.",
+                f"How are errors handled in {fallback_topic}?",
+                f"What are common use cases of {fallback_topic}?",
+                f"What are best practices in {fallback_topic}?",
+                f"Explain the advantages of {fallback_topic}.",
+                f"What challenges can arise while using {fallback_topic}?",
+                f"What advanced concepts exist in {fallback_topic}?"
             ]
-            for fb in fallbacks:
+
+            for question in fallback_questions:
+
                 if len(final_questions) >= 10:
                     break
-                normalized = re.sub(r"[^a-z0-9 ]", "", fb.lower())
-                if normalized not in seen_texts:
-                    final_questions.append({"question": fb, "topic": topic, "difficulty": "Easy", "subtopic": "basics"})
-                    seen_texts.add(normalized)
 
-        return {"questions": final_questions[:10]}
-    except:
-        return {"questions": [], "error": "Failed to parse AI response"}
+                final_questions.append({
+                    "question": question,
+                    "topic": fallback_topic,
+                    "subtopic": "General",
+                    "difficulty": "Easy"
+                })
+
+        print(
+            "Topic distribution:",
+            topic_count
+        )
+
+        return {
+            "questions": final_questions[:10]
+        }
+
+    except Exception as e:
+
+        print(
+            "Question generation error:",
+            str(e)
+        )
+
+        return {
+            "questions": [],
+            "error": str(e)
+        }
+
 
 
 def evaluate_answer(question, answer, topic=""):
