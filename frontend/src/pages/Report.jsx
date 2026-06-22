@@ -28,6 +28,7 @@ function Report() {
           return;
         }
 
+        console.log("Generating report...");
         const res = await API.post("/final-report", {
           results: answersData
         });
@@ -39,28 +40,22 @@ function Report() {
 
         setReport(res.data);
 
-        // Only save if not already saved (prevents duplicate)
-        const alreadySaved = localStorage.getItem("interviewSaved");
-        
-        if (!alreadySaved) {
-          try {
-            const user = JSON.parse(localStorage.getItem("user"));
-            await API.post("/save-interview", {
-              user_email: user?.email,
-              analysis: JSON.parse(localStorage.getItem("analysis")),
-              questions: JSON.parse(localStorage.getItem("questions")),
-              answers: answersData,
-              report: res.data,
-              videoUrl: interviewData.videoUrl || null
-            });
-            localStorage.setItem("interviewSaved", "true");
-            console.log("Interview saved successfully");
-          } catch (saveErr) {
-            console.log("Save Interview Error:", saveErr);
-          }
-        } else {
-          console.log("Interview already saved, skipping duplicate");
-        }
+        // Get user from localStorage
+        const user = JSON.parse(localStorage.getItem("user"));
+        console.log("User:", user);
+
+        // Save interview data
+        console.log("Saving interview...");
+        await API.post("/save-interview", {
+          user_email: user?.email || "anonymous",
+          analysis: JSON.parse(localStorage.getItem("analysis")) || null,
+          questions: JSON.parse(localStorage.getItem("questions")) || [],
+          answers: answersData,
+          report: res.data,
+          videoUrl: interviewData.videoUrl || null
+        });
+
+        console.log("Interview saved successfully");
       } catch (err) {
         console.log("Report Error:", err);
         setError("Failed to generate report.");
