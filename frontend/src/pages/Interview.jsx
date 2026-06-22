@@ -168,18 +168,18 @@ function Interview() {
     return { url, blob };
   };
 
-  const uploadVideo = async (blob) => {
-    const formData = new FormData();
-    const user = JSON.parse(localStorage.getItem('user')) || {};
-    formData.append('video', blob, `interview-${Date.now()}.webm`);
-    formData.append('userId', user.id || 'anonymous');
-    try {
-      const res = await API.post('/upload-interview-video', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      return res.data;
-    } catch (err) { return null; }
-  };
+  // const uploadVideo = async (blob) => {
+  //   const formData = new FormData();
+  //   const user = JSON.parse(localStorage.getItem('user')) || {};
+  //   formData.append('video', blob, `interview-${Date.now()}.webm`);
+  //   formData.append('userId', user.id || 'anonymous');
+  //   try {
+  //     const res = await API.post('/upload-interview-video', formData, {
+  //       headers: { 'Content-Type': 'multipart/form-data' }
+  //     });
+  //     return res.data;
+  //   } catch (err) { return null; }
+  // };
 
   const speak = (text, onDone) => {
     if (phase === "done" || isProcessingRef.current) return;
