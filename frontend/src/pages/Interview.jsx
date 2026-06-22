@@ -218,7 +218,7 @@ function Interview() {
       recordedAt: new Date().toISOString()
     };
     localStorage.setItem("interviewResults", JSON.stringify(finalResults));
-    if (videoData?.blob) uploadVideo(videoData.blob);
+    // if (videoData?.blob) uploadVideo(videoData.blob);
     navigate("/report");
   };
 
@@ -359,7 +359,7 @@ function Interview() {
         recordedAt: new Date().toISOString()
       }));
       isProcessingRef.current = false;
-      if (videoData?.blob) uploadVideo(videoData.blob);
+      // if (videoData?.blob) uploadVideo(videoData.blob);
       speak("Thank you! Your interview is complete.", () => setTimeout(() => navigate("/report"), 1500));
       return;
     }
