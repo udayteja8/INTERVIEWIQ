@@ -88,28 +88,60 @@ InterviewIQ addresses this challenge by delivering personalized AI-generated int
 * MongoDB Atlas
 
 
-
 ## System Architecture
 
-User
-│
-▼
-React Frontend
-│
-▼
-Flask Backend
-│
-├── Resume Parser
-├── Question Generator
-├── Evaluation Engine
-├── Follow-up Generator
-├── Report Generator
-│
-▼
-Groq LLM API
-│
-▼
-MongoDB Atlas
+The InterviewIQ architecture consists of four major layers:
+
+### 1. Frontend Layer
+
+* React.js
+* Vite
+* Bootstrap
+* Web Speech API
+
+Responsible for:
+
+* User Authentication
+* Resume Upload
+* Topic Selection
+* Voice Interaction
+* Report Visualization
+
+### 2. Backend Layer
+
+* Flask
+* Flask-CORS
+
+Responsible for:
+
+* Resume Processing
+* Question Generation
+* Answer Evaluation
+* Follow-up Question Generation
+* Report Generation
+
+### 3. AI Layer
+
+* Groq Cloud API
+* Llama 3.1 8B Instant
+
+Responsible for:
+
+* Resume Analysis
+* Personalized Interview Questions
+* Answer Assessment
+* Feedback Generation
+
+### 4. Database Layer
+
+* MongoDB Atlas
+
+Responsible for:
+
+* User Information Storage
+* Interview History
+* Reports and Analytics
+
 
 
 
@@ -127,11 +159,11 @@ MongoDB Atlas
 10. Interview history is stored in MongoDB Atlas.
 
 
-
 ## Project Structure
 
+```text
 InterviewIQ
-
+│
 ├── frontend
 │   ├── src
 │   ├── components
@@ -148,6 +180,7 @@ InterviewIQ
 │
 ├── README.md
 └── .gitignore
+```
 
 
 
